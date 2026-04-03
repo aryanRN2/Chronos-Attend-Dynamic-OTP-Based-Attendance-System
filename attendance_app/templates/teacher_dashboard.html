@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Dashboard - Attendance App{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+    
+    <!-- Left Column: Session Controls -->
+    <div>
+        <div class="card">
+            <h2 style="margin-bottom: 1.5rem;">Session Controls</h2>
+            
+            {% if active_session %}
+                <div style="background-color: rgba(16, 185, 129, 0.1); border: 1px solid var(--success-color); padding: 1.5rem; border-radius: 12px; text-align: center; margin-bottom: 1.5rem;">
+                    <h3 style="color: var(--success-color); margin-bottom: 0.5rem; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Active Session OTP</h3>
+                    <div class="otp-display" style="margin: 1rem 0;">{{ active_session.otp }}</div>
+                    
+                    {% set time_left = (active_session.expires_at - now).total_seconds() %}
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">
+                        Expires in roughly {{ (time_left // 60)|int }} minutes
+                    </p>
+                </div>
+            {% else %}
+                <div style="background-color: rgba(148, 163, 184, 0.1); padding: 2rem; border-radius: 12px; text-align: center; margin-bottom: 1.5rem;">
+                    <p style="color: var(--text-muted); margin-bottom: 0;">No active session.</p>
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('generate_session') }}">
+                <button type="submit" class="btn btn-block" style="{% if active_session %}background-color: var(--danger-color);{% endif %}">
+                    {% if active_session %}
+                        End Current & Generate New
+                    {% else %}
+                        Generate Session OTP
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Student List -->
+    <div>
+        <div class="card">
+            <h2>Attendance Records</h2>
+            {% if active_session %}
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Showing students present for the current active session.</p>
+                
+                {% if records %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Time Marked</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in records %}
+                                <tr>
+                                    <td>{{ record.student.name }}</td>
+                                    <td>{{ record.student.email }}</td>
+                                    <td>{{ record.timestamp.strftime('%H:%M:%S') }}</td>
+                                    <td><span style="color: var(--success-color); font-weight: 600;">{{ record.status }}</span></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div style="padding: 2rem; text-align: center; background-color: rgba(15, 23, 42, 0.5); border-radius: 8px; margin-top: 1rem;">
+                        <p style="color: var(--text-muted); margin: 0;">No students have marked attendance yet.</p>
+                    </div>
+                {% endif %}
+                
+            {% else %}
+                <div style="padding: 3rem; text-align: center;">
+                    <p style="color: var(--text-muted);">Generate a session to start tracking attendance.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple auto-reload to keep the attendance list fresh if there's an active session
+    {% if active_session %}
+    setTimeout(function() {
+        window.location.reload();
+    }, 15000); // Reloads every 15 seconds
+    {% endif %}
+</script>
+{% endblock %}
